@@ -15,6 +15,7 @@
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCWasmObjectWriter.h"
 #include "llvm/MC/MCWinCOFFObjectWriter.h"
+#include "llvm/MC/MCWLAVObjectWriter.h"
 #include "llvm/MC/MCXCOFFObjectWriter.h"
 #include <cassert>
 #include <cstddef>
@@ -41,6 +42,9 @@ MCAsmBackend::createObjectWriter(raw_pwrite_stream &OS) const {
         cast<MCWinCOFFObjectTargetWriter>(std::move(TW)), OS);
   case Triple::Wasm:
     return createWasmObjectWriter(cast<MCWasmObjectTargetWriter>(std::move(TW)),
+                                  OS);
+  case Triple::WLAV:
+    return createWLAVObjectWriter(cast<MCWLAVObjectTargetWriter>(std::move(TW)),
                                   OS);
   case Triple::XCOFF:
     return createXCOFFObjectWriter(

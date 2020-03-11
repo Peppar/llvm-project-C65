@@ -32,6 +32,7 @@ StringRef Triple::getArchTypeName(ArchType Kind) {
   case avr:            return "avr";
   case bpfeb:          return "bpfeb";
   case bpfel:          return "bpfel";
+  case c65:            return "c65";
   case hexagon:        return "hexagon";
   case hsail64:        return "hsail64";
   case hsail:          return "hsail";
@@ -137,6 +138,7 @@ StringRef Triple::getArchTypePrefix(ArchType Kind) {
 
   case spir:
   case spir64:      return "spir";
+  case c65:         return "c65";
   case kalimba:     return "kalimba";
   case lanai:       return "lanai";
   case shave:       return "shave";
@@ -309,6 +311,7 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     .Case("hsail64", hsail64)
     .Case("spir", spir)
     .Case("spir64", spir64)
+    .Case("c65", c65)
     .Case("kalimba", kalimba)
     .Case("lanai", lanai)
     .Case("shave", shave)
@@ -438,6 +441,7 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     .Case("hsail64", Triple::hsail64)
     .Case("spir", Triple::spir)
     .Case("spir64", Triple::spir64)
+    .Cases("6502", "65c02", "65816", Triple::c65)
     .StartsWith("kalimba", Triple::kalimba)
     .Case("lanai", Triple::lanai)
     .Case("renderscript32", Triple::renderscript32)
@@ -645,6 +649,7 @@ static StringRef getObjectFormatTypeName(Triple::ObjectFormatType Kind) {
   case Triple::ELF:   return "elf";
   case Triple::MachO: return "macho";
   case Triple::Wasm:  return "wasm";
+  case Triple::WLAV:  return "wlav";
   case Triple::XCOFF: return "xcoff";
   }
   llvm_unreachable("unknown object format type");
@@ -719,6 +724,9 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
   case Triple::wasm32:
   case Triple::wasm64:
     return Triple::Wasm;
+
+  case Triple::c65:
+    return Triple::WLAV;
   }
   llvm_unreachable("unknown architecture");
 }
@@ -1237,6 +1245,7 @@ static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
 
   case llvm::Triple::avr:
   case llvm::Triple::msp430:
+  case llvm::Triple::c65:
     return 16;
 
   case llvm::Triple::aarch64_32:
@@ -1317,6 +1326,7 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::bpfel:
   case Triple::msp430:
   case Triple::ppc64le:
+  case Triple::c65:
   case Triple::systemz:
   case Triple::ve:
     T.setArch(UnknownArch);
@@ -1388,6 +1398,7 @@ Triple Triple::get64BitArchVariant() const {
   case Triple::tce:
   case Triple::tcele:
   case Triple::xcore:
+  case Triple::c65:
     T.setArch(UnknownArch);
     break;
 

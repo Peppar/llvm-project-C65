@@ -50,6 +50,7 @@ add_llvm_component_library(LLVMMC
   MCWin64EH.cpp
   MCWinCOFFStreamer.cpp
   MCWinEH.cpp
+  MCWLAVObjectTargetWriter.cpp
   MCXCOFFObjectTargetWriter.cpp
   MCXCOFFStreamer.cpp
   MachObjectWriter.cpp
@@ -57,6 +58,7 @@ add_llvm_component_library(LLVMMC
   SubtargetFeature.cpp
   WasmObjectWriter.cpp
   WinCOFFObjectWriter.cpp
+  WLAVObjectWriter.cpp
   XCOFFObjectWriter.cpp
 
   ADDITIONAL_HEADER_DIRS
