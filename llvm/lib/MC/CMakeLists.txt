@@ -7,6 +7,7 @@ add_llvm_component_library(LLVMMC
   MCAsmInfoDarwin.cpp
   MCAsmInfoELF.cpp
   MCAsmInfoWasm.cpp
+  MCAsmInfoWLAV.cpp
   MCAsmInfoXCOFF.cpp
   MCAsmMacro.cpp
   MCAsmStreamer.cpp
@@ -38,6 +39,7 @@ add_llvm_component_library(LLVMMC
   MCSectionELF.cpp
   MCSectionMachO.cpp
   MCSectionWasm.cpp
+  MCSectionWLAV.cpp
   MCSectionXCOFF.cpp
   MCStreamer.cpp
   MCSubtargetInfo.cpp
@@ -51,6 +53,7 @@ add_llvm_component_library(LLVMMC
   MCWinCOFFStreamer.cpp
   MCWinEH.cpp
   MCWLAVObjectTargetWriter.cpp
+  MCWLAVStreamer.cpp
   MCXCOFFObjectTargetWriter.cpp
   MCXCOFFStreamer.cpp
   MachObjectWriter.cpp

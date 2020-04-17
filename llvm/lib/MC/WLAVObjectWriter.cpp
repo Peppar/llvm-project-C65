@@ -11,8 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/BinaryFormat/WLAV.h"
-#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmLayout.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
@@ -65,10 +65,10 @@ public:
   }
 
   bool isSymbolPrivate(const MCSymbol &Symb) const {
-    assert (hasSymbol(Symb));
+    assert(hasSymbol(Symb));
     return Symb.isTemporary() || SymbolInfoMap.lookup(&Symb).Private;
- // &&
- //       !SymbolInfoMap.lookup(&Symb).External);
+    // &&
+    //       !SymbolInfoMap.lookup(&Symb).External);
   }
 
   // bool isSymbolExternal(const MCSymbol &Symb) const {
@@ -88,8 +88,8 @@ public:
 // are not external and not guaranteed to be unique across all object
 // files. This function serves this purpose.
 //
-void writeSymbolName(raw_ostream &OS, MCAssembler &Asm,
-                     const MCSymbol &Symbol, const WLAVSymbolMap &SymbolMap) {
+void writeSymbolName(raw_ostream &OS, MCAssembler &Asm, const MCSymbol &Symbol,
+                     const WLAVSymbolMap &SymbolMap) {
   // Append the file name to private symbols. We can't use underscores
   // here, since they are section-private and does not resolve across
   // sections.
@@ -121,11 +121,11 @@ class WLAVCalcStackEntry {
     const MCSymbol *Symbol;
   };
   WLAVCalcStackEntry(double Imm)
-    : Type(WLAV::CALC_TYPE_VALUE), Sign(0), Value(Imm) {};
+      : Type(WLAV::CALC_TYPE_VALUE), Sign(0), Value(Imm){};
   WLAVCalcStackEntry(unsigned Op)
-    : Type(WLAV::CALC_TYPE_OPERATOR), Sign(0), Value((double)Op) {};
+      : Type(WLAV::CALC_TYPE_OPERATOR), Sign(0), Value((double)Op){};
   WLAVCalcStackEntry(const MCSymbol &Symbol, unsigned Sign)
-    : Type(WLAV::CALC_TYPE_STRING), Sign(Sign), Symbol(&Symbol) {};
+      : Type(WLAV::CALC_TYPE_STRING), Sign(Sign), Symbol(&Symbol){};
 
 public:
   static WLAVCalcStackEntry createImm(int Imm) {
@@ -143,8 +143,7 @@ public:
     W.write<uint8_t>(Type);
     W.write<uint8_t>(Sign);
     if (Type == WLAV::CALC_TYPE_VALUE || Type == WLAV::CALC_TYPE_OPERATOR) {
-      const uint64_t *X = (const uint64_t *)(&Value);
-      W.write<uint64_t>(*X);
+      W.write<double>(Value);
     } else {
       writeSymbolName(W.OS, Asm, *Symbol, SymbolMap);
       W.write<uint8_t>(0);
@@ -161,15 +160,12 @@ protected:
   unsigned Offset;
 
 public:
-  WLAVRelocationEntry(const MCSection &Section, unsigned Type,
-                      unsigned FileID, unsigned LineNumber,
-                      unsigned Offset)
-    : Section(&Section), Type(Type), FileID(FileID),
-      LineNumber(LineNumber), Offset(Offset) {};
+  WLAVRelocationEntry(const MCSection &Section, unsigned Type, unsigned FileID,
+                      unsigned LineNumber, unsigned Offset)
+      : Section(&Section), Type(Type), FileID(FileID), LineNumber(LineNumber),
+        Offset(Offset){};
 
-  const MCSection &getSection() {
-    return *Section;
-  }
+  const MCSection &getSection() { return *Section; }
 };
 
 class WLAVComplexRelocationEntry : public WLAVRelocationEntry {
@@ -180,14 +176,12 @@ public:
   WLAVComplexRelocationEntry(const MCSection &Section, unsigned Type,
                              unsigned FileID, unsigned LineNumber,
                              unsigned Offset)
-    : WLAVRelocationEntry(Section, Type, FileID, LineNumber, Offset) {};
+      : WLAVRelocationEntry(Section, Type, FileID, LineNumber, Offset){};
 
   void addImm(int Value) {
     Stack.push_back(WLAVCalcStackEntry::createImm(Value));
   }
-  void addOp(unsigned Op) {
-    Stack.push_back(WLAVCalcStackEntry::createOp(Op));
-  }
+  void addOp(unsigned Op) { Stack.push_back(WLAVCalcStackEntry::createOp(Op)); }
   void addSymb(const MCSymbol &Symbol) {
     Stack.push_back(WLAVCalcStackEntry::createSymb(Symbol));
   }
@@ -206,7 +200,8 @@ public:
       W.write<uint8_t>(0x80);
     else /* Type == WLAV::R_RELATIVE_16BIT */
       W.write<uint8_t>(0x81);
-    W.write<uint8_t>(SectionMap.getSectionID(*Section));
+    W.write<uint8_t>(0);
+    W.write<uint32_t>(SectionMap.getSectionID(*Section));
     W.write<uint8_t>(FileID);
     W.write<uint8_t>(Stack.size());
     W.write<uint8_t>(0);
@@ -225,8 +220,8 @@ public:
   WLAVSimpleRelocationEntry(const MCSection &Section, unsigned Type,
                             unsigned FileID, unsigned LineNumber,
                             unsigned Offset, const MCSymbol &Symbol)
-    : WLAVRelocationEntry(Section, Type, FileID, LineNumber, Offset),
-      Symbol(&Symbol) {};
+      : WLAVRelocationEntry(Section, Type, FileID, LineNumber, Offset),
+        Symbol(&Symbol){};
 
   void write(support::endian::Writer &W, MCAssembler &Asm,
              const WLAVSymbolMap &SymbolMap,
@@ -243,7 +238,8 @@ public:
       W.write<uint8_t>(0x1);
     else /* Type == WLAV::R_RELATIVE_16BIT */
       W.write<uint8_t>(0x4);
-    W.write<uint8_t>(SectionMap.getSectionID(*Section));
+    W.write<uint8_t>(0); /* Not a special case */
+    W.write<uint32_t>(SectionMap.getSectionID(*Section));
     W.write<uint8_t>(FileID);
     W.write<uint32_t>(LineNumber);
     W.write<uint32_t>(Offset);
@@ -269,20 +265,19 @@ class WLAVObjectWriter : public MCObjectWriter {
 
   unsigned NextSourceID;
   SmallDenseMap<unsigned, unsigned> BufferIDMap;
-  SmallDenseMap<unsigned, const char*> SourceFilenameMap;
+  SmallDenseMap<unsigned, const char *> SourceFilenameMap;
 
-  std::pair<unsigned, unsigned>
-  getFileAndLine(MCAssembler &Asm, const MCFixup &Fixup);
+  std::pair<unsigned, unsigned> getFileAndLine(MCAssembler &Asm,
+                                               const MCFixup &Fixup);
 
-  void getSections(MCAssembler &Asm,
-                   std::vector<const MCSection*> &Sections);
+  void getSections(MCAssembler &Asm, std::vector<const MCSection *> &Sections);
 
   void enumerateSections(MCAssembler &Asm, const MCAsmLayout &Layout);
 
 public:
   WLAVObjectWriter(std::unique_ptr<MCWLAVObjectTargetWriter> MOTW,
                    raw_pwrite_stream &OS)
-      : W(OS, support::little), TargetObjectWriter(std::move(MOTW)),
+      : W(OS, support::big), TargetObjectWriter(std::move(MOTW)),
         UnknownFileID(0), NextSourceID(0) {}
 
   virtual ~WLAVObjectWriter() = default;
@@ -304,16 +299,13 @@ public:
   /// complete.
   virtual void executePostLayoutBinding(MCAssembler &Asm,
                                         const MCAsmLayout &Layout) override;
-  void writeSection(MCAssembler &Asm,
-                    const MCAsmLayout &Layout,
+  void writeSection(MCAssembler &Asm, const MCAsmLayout &Layout,
                     const MCSection &Section);
 
-  void writeSymbol(MCAssembler &Asm,
-                   const MCAsmLayout &Layout,
+  void writeSymbol(MCAssembler &Asm, const MCAsmLayout &Layout,
                    const MCSymbol &Symbol);
 
-  void writeSymbolTable(MCAssembler &Asm,
-                        const MCAsmLayout &Layout);
+  void writeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout);
 
   void writeSourceFiles(MCAssembler &Asm, const MCAsmLayout &Layout);
 
@@ -323,8 +315,7 @@ public:
 } // end anonymous namespace
 
 std::pair<unsigned, unsigned>
-WLAVObjectWriter::getFileAndLine(MCAssembler &Asm,
-                                 const MCFixup &Fixup) {
+WLAVObjectWriter::getFileAndLine(MCAssembler &Asm, const MCFixup &Fixup) {
   MCContext &Ctx = Asm.getContext();
   const SourceMgr *SrcMgr = Ctx.getSourceManager();
   if (!SrcMgr) {
@@ -399,8 +390,8 @@ void WLAVObjectWriter::recordRelocation(MCAssembler &Asm,
     }
     ComplexRelocations.push_back(Rel);
   } else {
-    WLAVSimpleRelocationEntry Rel(*Section, Type, FileID, LineNumber,
-                                  Offset, SymA);
+    WLAVSimpleRelocationEntry Rel(*Section, Type, FileID, LineNumber, Offset,
+                                  SymA);
     SimpleRelocations.push_back(Rel);
   }
 }
@@ -412,8 +403,7 @@ void WLAVObjectWriter::executePostLayoutBinding(MCAssembler &Asm,
   }
 }
 
-void WLAVObjectWriter::writeSection(MCAssembler &Asm,
-                                    const MCAsmLayout &Layout,
+void WLAVObjectWriter::writeSection(MCAssembler &Asm, const MCAsmLayout &Layout,
                                     const MCSection &Section) {
   unsigned Size = Layout.getSectionFileSize(&Section);
   StringRef SectionName;
@@ -430,24 +420,24 @@ void WLAVObjectWriter::writeSection(MCAssembler &Asm,
   else
     SectionName = StringRef("UNKNOWN");
   W.OS << SectionName;
-  // String terminator decides section constraint
-  W.write<uint8_t>(WLAV::SECTION_FREE); // FREE or SUPERFREE
-  W.write<uint8_t>(SectionMap.getSectionID(Section)); // Section ID
-  W.write<uint8_t>(1); // FileID
+  W.write<uint8_t>(WLAV::SECTION_FREE);
+  W.OS << '\0'; /* Namespace */
+  W.write<uint32_t>(SectionMap.getSectionID(Section)); /* Section ID */
+  W.write<uint8_t>(1); /* FileID */
   W.write<uint32_t>(Size);
-  W.write<uint32_t>(1); // Alignment
+  W.write<uint32_t>(1); /* Alignment */
+  W.write<uint32_t>(0); /* Priority */
   Asm.writeSectionData(W.OS, &Section, Layout);
   W.write<uint8_t>(0); // List file information, 0 - not present
 }
 
-void WLAVObjectWriter::writeSymbol(MCAssembler &Asm,
-                                   const MCAsmLayout &Layout,
+void WLAVObjectWriter::writeSymbol(MCAssembler &Asm, const MCAsmLayout &Layout,
                                    const MCSymbol &Symbol) {
   writeSymbolName(W.OS, Asm, Symbol, SymbolMap);
   // String terminator decides type
   W.write<uint8_t>(0); // 0 - label, 1 - symbol, 2 - breakpoint
-  W.write<uint8_t>(SectionMap.getSectionID(Symbol.getSection())); // Section ID
-  W.write<uint8_t>(1); // File ID
+  W.write<uint32_t>(SectionMap.getSectionID(Symbol.getSection())); // Section ID
+  W.write<uint8_t>(1);                                             // File ID
   W.write<uint32_t>(0); // Line number
 
   // Write symbol offset
@@ -523,6 +513,7 @@ void WLAVObjectWriter::writeSourceFiles(MCAssembler &Asm,
       W.write<uint32_t>(1);
       W.OS << *FileNames.begin() << '\0';
       W.write<uint8_t>(UnknownFileID);
+      W.write<uint32_t>(0); // File checksum
       return;
     }
   }
@@ -553,15 +544,16 @@ void WLAVObjectWriter::writeSourceFiles(MCAssembler &Asm,
         Identifier = MemBuff->getBufferIdentifier();
     }
     if (!Identifier.empty())
-      W.OS << Identifier;
+      W.OS << Identifier << '\0';
     else
-      W.OS << "anonymous file " << BufferID;
-    W.OS << '\0';
+      W.OS << "anonymous file " << BufferID << '\0';
     W.write<uint8_t>(I->second);
+    W.write<uint32_t>(0); // File checksum
   }
   if (UnknownFileID) {
     W.OS << "unknown file" << '\0';
     W.write<uint8_t>(UnknownFileID);
+    W.write<uint32_t>(0); // File checksum
   }
 
   //  SourceMgr::SrcBuffer Buff = SourceMgr->getBufferInfo(BufferID);
@@ -579,11 +571,15 @@ uint64_t WLAVObjectWriter::writeObject(MCAssembler &Asm,
 
   enumerateSections(Asm, Layout);
 
-  // Header: 'WLAV'
+
+  // Header: 'WLAY', object file version 24 (2020-03-24)
   W.write<uint8_t>('W');
   W.write<uint8_t>('L');
   W.write<uint8_t>('A');
-  W.write<uint8_t>('V');
+  W.write<uint8_t>('7');
+
+  // Misc bits: little endian, 65816 present
+  W.write<uint8_t>(2);
 
   // Write the name of the source files, if available.
   writeSourceFiles(Asm, Layout);
@@ -608,8 +604,14 @@ uint64_t WLAVObjectWriter::writeObject(MCAssembler &Asm,
     Rel.write(W, Asm, SymbolMap, SectionMap, CalcID++);
   }
 
+  // Write label sizeofs
+  W.write<uint32_t>(0);
+
+  // Write section appends
+  W.write<uint32_t>(0);
+
   // Write data sections
-  std::vector<const MCSection*> Sections;
+  std::vector<const MCSection *> Sections;
   getSections(Asm, Sections);
   for (const MCSection *Section : Sections) {
     writeSection(Asm, Layout, *Section);
@@ -618,9 +620,8 @@ uint64_t WLAVObjectWriter::writeObject(MCAssembler &Asm,
   return W.OS.tell() - StartOffset;
 }
 
-void
-WLAVObjectWriter::getSections(MCAssembler &Asm,
-                              std::vector<const MCSection*> &Sections) {
+void WLAVObjectWriter::getSections(MCAssembler &Asm,
+                                   std::vector<const MCSection *> &Sections) {
   for (MCAssembler::iterator IT = Asm.begin(), IE = Asm.end(); IT != IE; ++IT) {
     Sections.push_back(&(*IT));
   }
@@ -631,4 +632,3 @@ llvm::createWLAVObjectWriter(std::unique_ptr<MCWLAVObjectTargetWriter> MOTW,
                              raw_pwrite_stream &OS) {
   return std::make_unique<WLAVObjectWriter>(std::move(MOTW), OS);
 }
-

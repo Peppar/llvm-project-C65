@@ -10,6 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_BINARYFORMAT_WLAV_H
+#define LLVM_BINARYFORMAT_WLAV_H
+
 namespace llvm {
 namespace WLAV {
 
@@ -57,3 +60,5 @@ enum {
 
 } // end namespace WLAV
 } // end namespace llvm
+
+#endif

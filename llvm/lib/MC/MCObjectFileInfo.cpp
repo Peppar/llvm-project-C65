@@ -18,6 +18,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSectionWasm.h"
+#include "llvm/MC/MCSectionWLAV.h"
 #include "llvm/MC/MCSectionXCOFF.h"
 
 using namespace llvm;
@@ -799,6 +800,17 @@ void MCObjectFileInfo::initWasmMCObjectFileInfo(const Triple &T) {
   // TODO: Define more sections.
 }
 
+void MCObjectFileInfo::initWLAVMCObjectFileInfo(const Triple &T) {
+  TextSection = Ctx->getWLAVSection(
+      ".text", SectionKind::getText());
+
+  DataSection = Ctx->getWLAVSection(
+      ".data", SectionKind::getData());
+
+  ReadOnlySection = Ctx->getWLAVSection(
+      ".rodata", SectionKind::getReadOnly());
+}
+
 void MCObjectFileInfo::initXCOFFMCObjectFileInfo(const Triple &T) {
   // The default csect for program code. Functions without a specified section
   // get placed into this csect. The choice of csect name is not a property of
@@ -873,6 +885,10 @@ void MCObjectFileInfo::InitMCObjectFileInfo(const Triple &TheTriple, bool PIC,
   case Triple::XCOFF:
     Env = IsXCOFF;
     initXCOFFMCObjectFileInfo(TT);
+    break;
+  case Triple::WLAV:
+    Env = IsWLAV;
+    initWLAVMCObjectFileInfo(TT);
     break;
   case Triple::UnknownObjectFormat:
     report_fatal_error("Cannot initialize MC for unknown object file format.");

@@ -27,6 +27,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSectionWasm.h"
+#include "llvm/MC/MCSectionWLAV.h"
 #include "llvm/MC/MCSectionXCOFF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
@@ -90,6 +91,7 @@ void MCContext::reset() {
   ELFAllocator.DestroyAll();
   MachOAllocator.DestroyAll();
   XCOFFAllocator.DestroyAll();
+  WLAVAllocator.DestroyAll();
 
   MCSubtargetAllocator.DestroyAll();
   InlineAsmUsedLabelNames.clear();
@@ -541,12 +543,35 @@ MCSectionWasm *MCContext::getWasmSection(const Twine &Section, SectionKind Kind,
   return Result;
 }
 
-MCSectionXCOFF *MCContext::getXCOFFSection(StringRef Section,
-                                           XCOFF::StorageMappingClass SMC,
-                                           XCOFF::SymbolType Type,
-                                           XCOFF::StorageClass SC,
-                                           SectionKind Kind,
-                                           const char *BeginSymName) {
+MCSectionWLAV *MCContext::getWLAVSection(StringRef Section, SectionKind Kind,
+                                         const char *BeginSymName) {
+  // Do the lookup, if we have a hit, return it.
+  auto IterBool =
+      WLAVUniquingMap.insert(std::make_pair(Section.str(), nullptr));
+  auto &Entry = *IterBool.first;
+  if (!IterBool.second)
+    return Entry.second;
+
+  StringRef CachedName = Entry.first;
+
+  MCSymbol *Begin = createSymbol(CachedName, false, false);
+
+  MCSectionWLAV *Result =
+      new (WLAVAllocator.Allocate()) MCSectionWLAV(CachedName, Kind, Begin);
+  Entry.second = Result;
+
+  auto *F = new MCDataFragment();
+  Result->getFragmentList().insert(Result->begin(), F);
+  F->setParent(Result);
+  Begin->setFragment(F);
+
+  return Result;
+}
+
+MCSectionXCOFF *
+MCContext::getXCOFFSection(StringRef Section, XCOFF::StorageMappingClass SMC,
+                           XCOFF::SymbolType Type, XCOFF::StorageClass SC,
+                           SectionKind Kind, const char *BeginSymName) {
   // Do the lookup. If we have a hit, return it.
   auto IterBool = XCOFFUniquingMap.insert(
       std::make_pair(XCOFFSectionKey{Section.str(), SMC}, nullptr));

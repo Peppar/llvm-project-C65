@@ -51,6 +51,7 @@ namespace llvm {
   class MCSectionELF;
   class MCSectionMachO;
   class MCSectionWasm;
+  class MCSectionWLAV;
   class MCSectionXCOFF;
   class MCStreamer;
   class MCSymbol;
@@ -95,6 +96,7 @@ namespace llvm {
     SpecificBumpPtrAllocator<MCSectionMachO> MachOAllocator;
     SpecificBumpPtrAllocator<MCSectionWasm> WasmAllocator;
     SpecificBumpPtrAllocator<MCSectionXCOFF> XCOFFAllocator;
+    SpecificBumpPtrAllocator<MCSectionWLAV> WLAVAllocator;
 
     /// Bindings of names to symbols.
     SymbolTable Symbols;
@@ -259,6 +261,8 @@ namespace llvm {
       }
     };
 
+    using WLAVSectionKey = std::string;
+
     struct XCOFFSectionKey {
       std::string SectionName;
       XCOFF::StorageMappingClass MappingClass;
@@ -277,6 +281,7 @@ namespace llvm {
     std::map<ELFSectionKey, MCSectionELF *> ELFUniquingMap;
     std::map<COFFSectionKey, MCSectionCOFF *> COFFUniquingMap;
     std::map<WasmSectionKey, MCSectionWasm *> WasmUniquingMap;
+    std::map<WLAVSectionKey, MCSectionWLAV *> WLAVUniquingMap;
     std::map<XCOFFSectionKey, MCSectionXCOFF *> XCOFFUniquingMap;
     StringMap<bool> RelSecNames;
 
@@ -505,6 +510,9 @@ namespace llvm {
     MCSectionWasm *getWasmSection(const Twine &Section, SectionKind K,
                                   const MCSymbolWasm *Group, unsigned UniqueID,
                                   const char *BeginSymName);
+
+    MCSectionWLAV *getWLAVSection(StringRef Section, SectionKind K,
+                                  const char *BeginSymName = nullptr);
 
     MCSectionXCOFF *getXCOFFSection(StringRef Section,
                                     XCOFF::StorageMappingClass MappingClass,
